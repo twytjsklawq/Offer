@@ -2,14 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Camera Recorder</title>
+  <title>Scanner</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
     body {
       margin: 0;
       background: black;
-      color: white;
+      color: #00ff00;
       font-family: Arial;
       display: flex;
       flex-direction: column;
@@ -18,41 +18,97 @@
       height: 100vh;
     }
 
-    video {
+    .scanner {
       width: 90vw;
       max-width: 400px;
-      border: 2px solid white;
+      height: 250px;
+      border: 2px solid #00ff00;
+      position: relative;
+      overflow: hidden;
       margin-bottom: 20px;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .scan-line {
+      position: absolute;
+      width: 100%;
+      height: 3px;
+      background: #00ff00;
+      animation: scan 2s linear infinite;
+    }
+
+    @keyframes scan {
+      0% { top: 0; }
+      100% { top: 100%; }
+    }
+
+    .timer {
+      font-size: 32px;
+      margin-bottom: 15px;
     }
 
     button {
       padding: 12px 25px;
-      font-size: 18px;
-      margin: 10px;
+      font-size: 16px;
+      background: black;
+      color: #00ff00;
+      border: 2px solid #00ff00;
+      margin: 8px;
       cursor: pointer;
+    }
+
+    .popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: black;
+      border: 2px solid #00ff00;
+      padding: 20px;
+      display: none;
     }
   </style>
 </head>
 
 <body>
 
-  <video id="preview" autoplay playsinline></video>
+  <button id="startBtn">Start Scan</button>
 
-  <button id="startBtn">Start Recording</button>
-  <button id="stopBtn" style="display:none;">Stop Recording</button>
+  <div class="scanner">
+    <video id="preview" autoplay playsinline></video>
+    <div class="scan-line"></div>
+  </div>
+
+  <div class="timer" id="timer">00:00</div>
+
+  <button id="submitBtn" style="display:none;">Submit</button>
+
+  <div class="popup" id="popup"></div>
 
   <script>
+    let seconds = 0;
+    const maxTime = 180;
+
+    let interval;
     let mediaRecorder;
     let recordedChunks = [];
     let stream;
 
     const video = document.getElementById("preview");
     const startBtn = document.getElementById("startBtn");
-    const stopBtn = document.getElementById("stopBtn");
+    const submitBtn = document.getElementById("submitBtn");
+    const popup = document.getElementById("popup");
+    const timerEl = document.getElementById("timer");
 
-    startBtn.addEventListener("click", async () => {
+    let firstClick = true;
+
+    async function startRecording() {
       try {
-        // Request BACK CAMERA
         stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: { exact: "environment" } },
           audio: true
@@ -72,7 +128,7 @@
 
           const a = document.createElement("a");
           a.href = url;
-          a.download = "recording.webm";
+          a.download = "scan-recording.webm";
           a.click();
 
           URL.revokeObjectURL(url);
@@ -80,28 +136,58 @@
 
         mediaRecorder.start();
 
+        interval = setInterval(updateTimer, 1000);
+
         startBtn.style.display = "none";
-        stopBtn.style.display = "block";
 
       } catch (err) {
-        alert("Please allow camera access (back camera may not be available on all devices).");
+        alert("Please allow camera permission.");
         console.error(err);
       }
-    });
+    }
 
-    stopBtn.addEventListener("click", () => {
+    function updateTimer() {
+      let mins = Math.floor(seconds / 60);
+      let secs = seconds % 60;
+
+      timerEl.textContent =
+        String(mins).padStart(2, '0') + ":" +
+        String(secs).padStart(2, '0');
+
+      if (seconds >= maxTime) {
+        clearInterval(interval);
+        submitBtn.style.display = "block";
+      }
+
+      seconds++;
+    }
+
+    function stopRecording() {
       if (mediaRecorder && mediaRecorder.state !== "inactive") {
         mediaRecorder.stop();
       }
 
-      // Stop camera stream
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
+    }
 
-      stopBtn.style.display = "none";
-      startBtn.style.display = "block";
+    startBtn.addEventListener("click", startRecording);
+
+    submitBtn.addEventListener("click", () => {
+      if (firstClick) {
+        popup.style.display = "block";
+        popup.textContent = "Scanning In Progress";
+
+        setTimeout(() => {
+          popup.textContent = "Scanning Completed";
+          stopRecording();
+        }, 5000);
+
+        firstClick = false;
+      }
     });
+
   </script>
 
 </body>
