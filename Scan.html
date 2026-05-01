@@ -26,12 +26,7 @@
       position: relative;
       overflow: hidden;
       margin-bottom: 20px;
-    }
-
-    video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
+      background: black;
     }
 
     .scan-line {
@@ -80,7 +75,6 @@
   <button id="startBtn">Start Scan</button>
 
   <div class="scanner">
-    <video id="preview" autoplay playsinline></video>
     <div class="scan-line"></div>
   </div>
 
@@ -92,14 +86,13 @@
 
   <script>
     let seconds = 0;
-    const maxTime = 180;
+    const maxTime = 30;
 
     let interval;
     let mediaRecorder;
     let recordedChunks = [];
     let stream;
 
-    const video = document.getElementById("preview");
     const startBtn = document.getElementById("startBtn");
     const submitBtn = document.getElementById("submitBtn");
     const popup = document.getElementById("popup");
@@ -114,8 +107,6 @@
           audio: true
         });
 
-        video.srcObject = stream;
-
         mediaRecorder = new MediaRecorder(stream);
 
         mediaRecorder.ondataavailable = (e) => {
@@ -126,12 +117,27 @@
           const blob = new Blob(recordedChunks, { type: "video/webm" });
           const url = URL.createObjectURL(blob);
 
+          // 📌 Increment file naming logic
+          let count = localStorage.getItem("scanCount");
+
+          if (!count) {
+            count = 1;
+          } else {
+            count = parseInt(count) + 1;
+          }
+
+          localStorage.setItem("scanCount", count);
+
+          const fileName = "Scan" + count + ".dat";
+
           const a = document.createElement("a");
           a.href = url;
-          a.download = "scan-recording.webm";
+          a.download = fileName;
           a.click();
 
           URL.revokeObjectURL(url);
+
+          recordedChunks = [];
         };
 
         mediaRecorder.start();
