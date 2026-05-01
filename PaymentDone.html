@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Payment Success</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #f5f7fb;
+      font-family: Arial, sans-serif;
+    }
+
+    .container {
+      text-align: center;
+      animation: fadeIn 1s ease-in-out;
+    }
+
+    /* Circle animation */
+    .circle {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: #00c853;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0 auto 20px;
+      animation: pop 0.6s ease;
+    }
+
+    /* Tick */
+    .checkmark {
+      width: 40px;
+      height: 20px;
+      border-left: 5px solid white;
+      border-bottom: 5px solid white;
+      transform: rotate(-45deg);
+      animation: draw 0.5s ease forwards;
+    }
+
+    @keyframes pop {
+      0% { transform: scale(0); }
+      80% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes draw {
+      0% {
+        width: 0;
+        height: 0;
+        opacity: 0;
+      }
+      100% {
+        width: 40px;
+        height: 20px;
+        opacity: 1;
+      }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .title {
+      font-size: 22px;
+      font-weight: bold;
+      color: #222;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      font-size: 16px;
+      color: #666;
+    }
+
+    /* Mobile responsiveness */
+    @media (max-width: 480px) {
+      .circle {
+        width: 80px;
+        height: 80px;
+      }
+
+      .title {
+        font-size: 18px;
+      }
+
+      .subtitle {
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <div class="circle">
+      <div class="checkmark"></div>
+    </div>
+
+    <div class="title">Amount has been transferred successfully</div>
+    <div class="subtitle">Transaction completed</div>
+  </div>
+
+</body>
+</html>
