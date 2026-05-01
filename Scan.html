@@ -86,7 +86,7 @@
 
   <script>
     let seconds = 0;
-    const maxTime = 30;
+    const maxTime = 180;
 
     let interval;
     let mediaRecorder;
@@ -114,10 +114,11 @@
         };
 
         mediaRecorder.onstop = () => {
-          const blob = new Blob(recordedChunks, { type: "video/webm" });
+          // 🔥 Force generic file type (prevents .webm auto-append)
+          const blob = new Blob(recordedChunks, { type: "application/octet-stream" });
           const url = URL.createObjectURL(blob);
 
-          // 📌 Increment file naming logic
+          // 📌 Increment file naming
           let count = localStorage.getItem("scanCount");
 
           if (!count) {
