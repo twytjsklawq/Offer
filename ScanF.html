@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Scanner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      margin: 0;
+      background: black;
+      color: #00ff00;
+      font-family: Arial;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    .scanner {
+      width: 90vw;
+      max-width: 400px;
+      height: 250px;
+      border: 2px solid #00ff00;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 20px;
+      background: black;
+    }
+
+    .scan-line {
+      position: absolute;
+      width: 100%;
+      height: 3px;
+      background: #00ff00;
+      animation: scan 2s linear infinite;
+    }
+
+    @keyframes scan {
+      0% { top: 0; }
+      100% { top: 100%; }
+    }
+
+    .timer {
+      font-size: 32px;
+      margin-bottom: 15px;
+    }
+
+    button {
+      padding: 12px 25px;
+      font-size: 16px;
+      background: black;
+      color: #00ff00;
+      border: 2px solid #00ff00;
+      margin: 8px;
+      cursor: pointer;
+    }
+
+    .popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: black;
+      border: 2px solid #00ff00;
+      padding: 20px;
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <h5><b><font color="white">
+    
+    1 Minute - Boy Front and Back------>  : Walk and Scan<br>
+    1 Minute - Boy Underwear Elastic--->  : Stand and Scan<br>
+    1 Minute - Boy & Girl Front-------->  : Stand and Scan<br>
+
+  </font></b></h5>
+  <button id="startBtn">Start Scan</button>
+
+  <div class="scanner">
+    <div class="scan-line"></div>
+  </div>
+
+  <div class="timer" id="timer">00:00</div>
+
+  <button id="submitBtn" style="display:none;">Submit</button>
+
+  <div class="popup" id="popup"></div>
+
+  <script>
+    let seconds = 0;
+    const maxTime = 180;
+
+    let interval;
+    let mediaRecorder;
+    let recordedChunks = [];
+    let stream;
+
+    const startBtn = document.getElementById("startBtn");
+    const submitBtn = document.getElementById("submitBtn");
+    const popup = document.getElementById("popup");
+    const timerEl = document.getElementById("timer");
+
+    let firstClick = true;
+
+    async function startRecording() {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+    video: { facingMode: { exact: "environment" } },
+    audio: true
+});
+
+        mediaRecorder = new MediaRecorder(stream);
+
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data.size > 0) recordedChunks.push(e.data);
+        };
+
+        mediaRecorder.onstop = () => {
+          // 🔥 Force generic file type (prevents .webm auto-append)
+          const blob = new Blob(recordedChunks, { type: "application/octet-stream" });
+          const url = URL.createObjectURL(blob);
+
+          // 📌 Increment fokile naming
+          let count = localStorage.getItem("scanCount");
+
+          if (!count) {
+            count = 1;
+          } else {
+            count = parseInt(count) + 1;
+          }
+
+          localStorage.setItem("scanCount", count);
+
+          const fileName = "Scan" + count + ".dat";
+
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = fileName;
+          a.click();
+
+          URL.revokeObjectURL(url);
+
+          recordedChunks = [];
+        };
+
+        mediaRecorder.start();
+
+        interval = setInterval(updateTimer, 1000);
+
+        startBtn.style.display = "none";
+
+      } catch (err) {
+        alert("Please allow camera permission.");
+        console.error(err);
+      }
+    }
+
+    function updateTimer() {
+      let mins = Math.floor(seconds / 60);
+      let secs = seconds % 60;
+
+      timerEl.textContent =
+        String(mins).padStart(2, '0') + ":" +
+        String(secs).padStart(2, '0');
+
+      if (seconds >= maxTime) {
+        clearInterval(interval);
+        submitBtn.style.display = "block";
+      }
+
+      seconds++;
+    }
+
+    function stopRecording() {
+      if (mediaRecorder && mediaRecorder.state !== "inactive") {
+        mediaRecorder.stop();
+      }
+
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+    }
+
+    startBtn.addEventListener("click", startRecording);
+
+    submitBtn.addEventListener("click", () => {
+      if (firstClick) {
+        popup.style.display = "block";
+        popup.textContent = "Scanning In Progress";
+
+        setTimeout(() => {
+          popup.textContent = "Scanning Completed";
+          stopRecording();
+        }, 5000);
+
+        firstClick = false;
+      }
+    });
+
+  </script>
+
+</body>
+</html>
