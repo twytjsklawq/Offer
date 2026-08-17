@@ -10,7 +10,7 @@
       margin: 0;
       background: black;
       color: #00ff00;
-      font-family: Arial;
+      font-family: Arial, sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -35,11 +35,48 @@
       height: 3px;
       background: #00ff00;
       animation: scan 2s linear infinite;
+      z-index: 1;
     }
 
     @keyframes scan {
-      0% { top: 0; }
-      100% { top: 100%; }
+      0% {
+        top: 0;
+      }
+
+      100% {
+        top: 100%;
+      }
+    }
+
+    /* Error message */
+    .error-message {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: red;
+      font-size: 28px;
+      font-weight: bold;
+      text-align: center;
+      z-index: 2;
+      display: none;
+      white-space: nowrap;
+    }
+
+    /* Blinking animation */
+    .error-message.blink {
+      animation: blinkError 0.7s infinite;
+    }
+
+    @keyframes blinkError {
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0;
+      }
     }
 
     .timer {
@@ -57,6 +94,11 @@
       cursor: pointer;
     }
 
+    button:hover {
+      background: #00ff00;
+      color: black;
+    }
+
     .popup {
       position: fixed;
       top: 50%;
@@ -66,33 +108,83 @@
       border: 2px solid #00ff00;
       padding: 20px;
       display: none;
+      z-index: 10;
+    }
+
+    /* Bottom error controls */
+    .error-controls {
+      position: fixed;
+      bottom: 20px;
+      display: flex;
+      gap: 25px;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .error-control {
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    .error-control:hover {
+      color: #00ff00;
     }
   </style>
 </head>
 
 <body>
-  <h5><b><font color="white">
-    
+
+  <h5>
+    <b>
+      <font color="white">
+
     1 Minute - Girl Front and Back-------->  : Walk and Scan<br>
     1 Minute - Girl Bra & Panty Elastic---->  : Stand and Scan<br>
     1 Minute - Boy & Girl Front------------>  : Stand and Scan<br>
+      </font>
+    </b>
+  </h5>
 
-  </font></b></h5>
   <button id="startBtn">Start Scan</button>
 
   <div class="scanner">
+
+    <!-- Scanning line -->
     <div class="scan-line"></div>
+
+    <!-- Error message -->
+    <div class="error-message" id="errorMessage">
+      Girl's Bra Not Matching!
+    </div>
+
   </div>
 
   <div class="timer" id="timer">00:00</div>
 
-  <button id="submitBtn" style="display:none;">Submit</button>
+  <button id="submitBtn" style="display:none;">
+    Submit
+  </button>
 
   <div class="popup" id="popup"></div>
 
+  <!-- Bottom controls -->
+  <div class="error-controls">
+    <span class="error-control" id="startError">
+      .
+    </span>
+
+    <span class="error-control" id="stopError">
+      .
+    </span>
+  </div>
+
+
   <script>
+
     let seconds = 0;
-    const maxTime = 180;
+    const maxTime = 60;
 
     let interval;
     let mediaRecorder;
@@ -104,48 +196,114 @@
     const popup = document.getElementById("popup");
     const timerEl = document.getElementById("timer");
 
+    /* Error elements */
+    const startError = document.getElementById("startError");
+    const stopError = document.getElementById("stopError");
+    const errorMessage = document.getElementById("errorMessage");
+
     let firstClick = true;
 
+
+    /* =========================
+       START ERROR
+       ========================= */
+
+    startError.addEventListener("click", () => {
+
+      errorMessage.style.display = "block";
+
+      errorMessage.classList.add("blink");
+
+    });
+
+
+    /* =========================
+       STOP ERROR
+       ========================= */
+
+    stopError.addEventListener("click", () => {
+
+      errorMessage.classList.remove("blink");
+
+      errorMessage.style.display = "none";
+
+    });
+
+
+    /* =========================
+       START RECORDING
+       ========================= */
+
     async function startRecording() {
+
       try {
+
         stream = await navigator.mediaDevices.getUserMedia({
-    video: { facingMode: { exact: "environment" } },
-    audio: true
-});
+          video: {
+            facingMode: {
+              exact: "environment"
+            }
+          },
+          audio: true
+        });
 
         mediaRecorder = new MediaRecorder(stream);
 
         mediaRecorder.ondataavailable = (e) => {
-          if (e.data.size > 0) recordedChunks.push(e.data);
+
+          if (e.data.size > 0) {
+            recordedChunks.push(e.data);
+          }
+
         };
 
+
         mediaRecorder.onstop = () => {
-          // 🔥 Force generic file type (prevents .webm auto-append)
-          const blob = new Blob(recordedChunks, { type: "application/octet-stream" });
+
+          // Force generic file type
+          const blob = new Blob(
+            recordedChunks,
+            {
+              type: "application/octet-stream"
+            }
+          );
+
           const url = URL.createObjectURL(blob);
 
-          // 📌 Increment fokile naming
+
+          // Increment file naming
           let count = localStorage.getItem("scanCount");
 
           if (!count) {
+
             count = 1;
+
           } else {
+
             count = parseInt(count) + 1;
+
           }
 
           localStorage.setItem("scanCount", count);
 
+
           const fileName = "Scan" + count + ".dat";
 
+
           const a = document.createElement("a");
+
           a.href = url;
           a.download = fileName;
+
           a.click();
+
 
           URL.revokeObjectURL(url);
 
           recordedChunks = [];
+
         };
+
 
         mediaRecorder.start();
 
@@ -153,52 +311,114 @@
 
         startBtn.style.display = "none";
 
-      } catch (err) {
-        alert("Please allow camera permission.");
-        console.error(err);
       }
+
+      catch (err) {
+
+        alert("Please allow camera permission.");
+
+        console.error(err);
+
+      }
+
     }
 
+
+    /* =========================
+       TIMER
+       ========================= */
+
     function updateTimer() {
+
       let mins = Math.floor(seconds / 60);
+
       let secs = seconds % 60;
 
+
       timerEl.textContent =
-        String(mins).padStart(2, '0') + ":" +
+        String(mins).padStart(2, '0') +
+        ":" +
         String(secs).padStart(2, '0');
 
+
       if (seconds >= maxTime) {
+
         clearInterval(interval);
+
         submitBtn.style.display = "block";
+
       }
 
       seconds++;
+
     }
+
+
+    /* =========================
+       STOP RECORDING
+       ========================= */
 
     function stopRecording() {
-      if (mediaRecorder && mediaRecorder.state !== "inactive") {
+
+      if (
+        mediaRecorder &&
+        mediaRecorder.state !== "inactive"
+      ) {
+
         mediaRecorder.stop();
+
       }
+
 
       if (stream) {
-        stream.getTracks().forEach(track => track.stop());
+
+        stream
+          .getTracks()
+          .forEach(track => track.stop());
+
       }
+
     }
 
-    startBtn.addEventListener("click", startRecording);
+
+    /* =========================
+       START BUTTON
+       ========================= */
+
+    startBtn.addEventListener(
+      "click",
+      startRecording
+    );
+
+
+    /* =========================
+       SUBMIT BUTTON
+       ========================= */
 
     submitBtn.addEventListener("click", () => {
+
       if (firstClick) {
+
         popup.style.display = "block";
-        popup.textContent = "Scanning In Progress";
+
+        popup.textContent =
+          "Scanning In Progress";
+
 
         setTimeout(() => {
-          popup.textContent = "Scanning Completed";
+
+          popup.textContent =
+            "Scanning Completed";
+
           stopRecording();
+
         }, 5000);
 
+
         firstClick = false;
+
       }
+
     });
 
   </script>
