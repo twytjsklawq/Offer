@@ -1,875 +1,422 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
-    <meta charset="UTF-8">
-
-    <title>Scanner</title>
-
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
-
-    <style>
-
-        body {
-
-            margin: 0;
-
-            background: black;
-
-            color: #00ff00;
-
-            font-family: Arial, sans-serif;
-
-            display: flex;
-
-            flex-direction: column;
-
-            align-items: center;
-
-            justify-content: center;
-
-            min-height: 100vh;
-
-        }
-
-
-        h4 {
-
-            margin-bottom: 15px;
-
-        }
-
-
-        button {
-
-            padding: 12px 25px;
-
-            font-size: 16px;
-
-            background: black;
-
-            color: #00ff00;
-
-            border: 2px solid #00ff00;
-
-            margin: 8px;
-
-            cursor: pointer;
-
-        }
-
-
-        button:hover {
-
-            background: #00ff00;
-
-            color: black;
-
-        }
-
-
-        /*
-        ==========================================
-        CAMERA SCANNER
-        ==========================================
-        */
-
-        .scanner {
-
-            width: 90vw;
-
-            max-width: 400px;
-
-            height: 250px;
-
-            border: 2px solid #00ff00;
-
-            position: relative;
-
-            overflow: hidden;
-
-            margin-bottom: 20px;
-
-            background: black;
-
-        }
-
-
-        /*
-        ==========================================
-        LIVE CAMERA
-        ==========================================
-        */
-
-        #cameraVideo {
-
-            width: 100%;
-
-            height: 100%;
-
-            object-fit: cover;
-
-            display: none;
-
-        }
-
-
-        /*
-        ==========================================
-        SCAN LINE
-        ==========================================
-        */
-
-        .scan-line {
-
-            position: absolute;
-
-            width: 100%;
-
-            height: 3px;
-
-            background: #00ff00;
-
-            animation: scan 2s linear infinite;
-
-            z-index: 10;
-
-            pointer-events: none;
-
-        }
-
-
-        @keyframes scan {
-
-            0% {
-
-                top: 0;
-
-            }
-
-            100% {
-
-                top: 100%;
-
-            }
-
-        }
-
-
-        /*
-        ==========================================
-        TIMER
-        ==========================================
-        */
-
-        .timer {
-
-            font-size: 32px;
-
-            margin-bottom: 15px;
-
-        }
-
-
-        /*
-        ==========================================
-        POPUP
-        ==========================================
-        */
-
-        .popup {
-
-            position: fixed;
-
-            top: 50%;
-
-            left: 50%;
-
-            transform: translate(-50%, -50%);
-
-            background: black;
-
-            border: 2px solid #00ff00;
-
-            color: #00ff00;
-
-            padding: 20px;
-
-            display: none;
-
-            z-index: 100;
-
-            text-align: center;
-
-        }
-
-    </style>
-
+  <meta charset="UTF-8">
+  <title>Scanner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      margin: 0;
+      background: black;
+      color: #00ff00;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    .scanner {
+      width: 90vw;
+      max-width: 400px;
+      height: 250px;
+      border: 2px solid #00ff00;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 20px;
+      background: black;
+    }
+
+    .scan-line {
+      position: absolute;
+      width: 100%;
+      height: 3px;
+      background: #00ff00;
+      animation: scan 2s linear infinite;
+      z-index: 1;
+    }
+
+    @keyframes scan {
+      0% {
+        top: 0;
+      }
+
+      100% {
+        top: 100%;
+      }
+    }
+
+    /* Error message */
+    .error-message {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: red;
+      font-size: 28px;
+      font-weight: bold;
+      text-align: center;
+      z-index: 2;
+      display: none;
+      white-space: nowrap;
+    }
+
+    /* Blinking animation */
+    .error-message.blink {
+      animation: blinkError 0.7s infinite;
+    }
+
+    @keyframes blinkError {
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0;
+      }
+    }
+
+    .timer {
+      font-size: 32px;
+      margin-bottom: 15px;
+    }
+
+    button {
+      padding: 12px 25px;
+      font-size: 16px;
+      background: black;
+      color: #00ff00;
+      border: 2px solid #00ff00;
+      margin: 8px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #00ff00;
+      color: black;
+    }
+
+    .popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: black;
+      border: 2px solid #00ff00;
+      padding: 20px;
+      display: none;
+      z-index: 10;
+    }
+
+    /* Bottom error controls */
+    .error-controls {
+      position: fixed;
+      bottom: 20px;
+      display: flex;
+      gap: 25px;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .error-control {
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    .error-control:hover {
+      color: #00ff00;
+    }
+  </style>
 </head>
-
 
 <body>
 
+  <h5>
+    <b>
+      <font color="white"></font>
+    </b>
+  </h5>
 
-    <h4>
+  <button id="startBtn">Start Scan</button>
 
-        <b>
+  <div class="scanner">
 
-            <font color="white">
+    <!-- Scanning line -->
+    <div class="scan-line"></div>
 
-                Scan
-
-            </font>
-
-        </b>
-
-    </h4>
-
-
-    <button id="startBtn">
-
-        Start Scan
-
-    </button>
-
-
-    <!--
-    ==========================================
-    CAMERA WINDOW
-    ==========================================
-    -->
-
-    <div class="scanner">
-
-        <video
-            id="cameraVideo"
-            autoplay
-            playsinline
-            muted>
-        </video>
-
-        <div class="scan-line"></div>
-
+    <!-- Error message -->
+    <div class="error-message" id="errorMessage">
+      Error Occurred
     </div>
 
+  </div>
 
-    <div
-        class="timer"
-        id="timer">
+  <div class="timer" id="timer">00:00</div>
 
-        00:00
+  <button id="submitBtn" style="display:none;">
+    Submit
+  </button>
 
-    </div>
+  <div class="popup" id="popup"></div>
 
+  <!-- Bottom controls -->
+  <div class="error-controls">
+    <span class="error-control" id="startError">
+      startError
+    </span>
 
-    <button
-        id="submitBtn"
-        style="display:none;">
+    <span class="error-control" id="stopError">
+      stopError
+    </span>
+  </div>
 
-        Submit
 
-    </button>
+  <script>
 
+    let seconds = 0;
+    const maxTime = 180;
 
-    <div
-        class="popup"
-        id="popup">
-    </div>
+    let interval;
+    let mediaRecorder;
+    let recordedChunks = [];
+    let stream;
 
+    const startBtn = document.getElementById("startBtn");
+    const submitBtn = document.getElementById("submitBtn");
+    const popup = document.getElementById("popup");
+    const timerEl = document.getElementById("timer");
 
+    /* Error elements */
+    const startError = document.getElementById("startError");
+    const stopError = document.getElementById("stopError");
+    const errorMessage = document.getElementById("errorMessage");
 
-    <script>
+    let firstClick = true;
 
-        let seconds = 0;
 
-        const maxTime = 60;
+    /* =========================
+       START ERROR
+       ========================= */
 
-        let interval;
+    startError.addEventListener("click", () => {
 
-        let mediaRecorder;
+      errorMessage.style.display = "block";
 
-        let recordedChunks = [];
+      errorMessage.classList.add("blink");
 
-        let stream;
+    });
 
 
-        const startBtn =
-            document.getElementById(
-                "startBtn"
-            );
+    /* =========================
+       STOP ERROR
+       ========================= */
 
+    stopError.addEventListener("click", () => {
 
-        const submitBtn =
-            document.getElementById(
-                "submitBtn"
-            );
+      errorMessage.classList.remove("blink");
 
+      errorMessage.style.display = "none";
 
-        const popup =
-            document.getElementById(
-                "popup"
-            );
+    });
 
 
-        const timerEl =
-            document.getElementById(
-                "timer"
-            );
+    /* =========================
+       START RECORDING
+       ========================= */
 
+    async function startRecording() {
 
-        const cameraVideo =
-            document.getElementById(
-                "cameraVideo"
-            );
+      try {
 
-
-        let firstClick = true;
-
-
-
-        /*
-        ==========================================
-        START RECORDING
-        ==========================================
-        */
-
-        async function startRecording() {
-
-            try {
-
-
-                /*
-                ==================================
-                OPEN REAR CAMERA
-                ==================================
-                */
-
-                stream =
-                    await navigator.mediaDevices
-                        .getUserMedia({
-
-                            video: {
-
-                                facingMode: {
-                                    ideal: "environment"
-                                },
-
-                                width: {
-                                    ideal: 1920
-                                },
-
-                                height: {
-                                    ideal: 1080
-                                }
-
-                            },
-
-                            audio: true
-
-                        });
-
-
-
-                /*
-                ==================================
-                GET VIDEO TRACK
-                ==================================
-                */
-
-                const videoTrack =
-                    stream.getVideoTracks()[0];
-
-
-                console.log(
-                    "Camera:",
-                    videoTrack.label
-                );
-
-
-                /*
-                ==================================
-                GET CAMERA CAPABILITIES
-                ==================================
-                */
-
-                const capabilities =
-                    videoTrack.getCapabilities();
-
-
-                console.log(
-                    "Camera capabilities:",
-                    capabilities
-                );
-
-
-                /*
-                ==================================
-                TRY TO SET 1X ZOOM
-                ==================================
-                */
-
-                if (capabilities.zoom) {
-
-
-                    console.log(
-                        "Zoom supported."
-                    );
-
-
-                    console.log(
-                        "Minimum zoom:",
-                        capabilities.zoom.min
-                    );
-
-
-                    console.log(
-                        "Maximum zoom:",
-                        capabilities.zoom.max
-                    );
-
-
-                    /*
-                    Target = 1x
-                    */
-
-                    let targetZoom = 1;
-
-
-                    /*
-                    Make sure 1x is inside the
-                    camera's supported range.
-                    */
-
-                    targetZoom =
-                        Math.max(
-                            capabilities.zoom.min,
-                            Math.min(
-                                targetZoom,
-                                capabilities.zoom.max
-                            )
-                        );
-
-
-                    console.log(
-                        "Applying zoom:",
-                        targetZoom
-                    );
-
-
-                    try {
-
-                        await videoTrack.applyConstraints({
-
-                            advanced: [
-
-                                {
-                                    zoom:
-                                        targetZoom
-                                }
-
-                            ]
-
-                        });
-
-
-                        console.log(
-                            "1x zoom applied successfully."
-                        );
-
-                    }
-
-                    catch (zoomError) {
-
-                        console.error(
-                            "Unable to apply 1x zoom:",
-                            zoomError
-                        );
-
-                    }
-
-                }
-
-                else {
-
-                    console.log(
-                        "This browser/device does not expose zoom control."
-                    );
-
-                }
-
-
-
-                /*
-                ==================================
-                SHOW LIVE CAMERA
-                ==================================
-                */
-
-                cameraVideo.srcObject =
-                    stream;
-
-
-                cameraVideo.style.display =
-                    "block";
-
-
-                await cameraVideo.play();
-
-
-
-                /*
-                ==================================
-                MEDIA RECORDER
-                ==================================
-                */
-
-                mediaRecorder =
-                    new MediaRecorder(
-                        stream
-                    );
-
-
-                mediaRecorder.ondataavailable =
-                    (e) => {
-
-                        if (
-                            e.data.size > 0
-                        ) {
-
-                            recordedChunks.push(
-                                e.data
-                            );
-
-                        }
-
-                    };
-
-
-
-                /*
-                ==================================
-                WHEN RECORDING STOPS
-                ==================================
-                */
-
-                mediaRecorder.onstop =
-                    () => {
-
-
-                        const blob =
-                            new Blob(
-                                recordedChunks,
-                                {
-                                    type:
-                                        "application/octet-stream"
-                                }
-                            );
-
-
-                        const url =
-                            URL.createObjectURL(
-                                blob
-                            );
-
-
-                        /*
-                        File counter
-                        */
-
-                        let count =
-                            localStorage.getItem(
-                                "scanCount"
-                            );
-
-
-                        if (!count) {
-
-                            count = 1;
-
-                        }
-
-                        else {
-
-                            count =
-                                parseInt(count) + 1;
-
-                        }
-
-
-                        localStorage.setItem(
-                            "scanCount",
-                            count
-                        );
-
-
-                        /*
-                        File name
-                        */
-
-                        const fileName =
-                            "Scan" +
-                            count +
-                            ".dat";
-
-
-                        /*
-                        Download
-                        */
-
-                        const a =
-                            document.createElement(
-                                "a"
-                            );
-
-
-                        a.href = url;
-
-                        a.download =
-                            fileName;
-
-                        a.click();
-
-
-                        URL.revokeObjectURL(
-                            url
-                        );
-
-
-                        recordedChunks = [];
-
-                    };
-
-
-
-                /*
-                ==================================
-                START RECORDING
-                ==================================
-                */
-
-                mediaRecorder.start();
-
-
-
-                /*
-                ==================================
-                START TIMER
-                ==================================
-                */
-
-                interval =
-                    setInterval(
-                        updateTimer,
-                        1000
-                    );
-
-
-                /*
-                Hide Start button
-                */
-
-                startBtn.style.display =
-                    "none";
-
-
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: {
+              exact: "environment"
             }
+          },
+          audio: true
+        });
 
-            catch (err) {
+        mediaRecorder = new MediaRecorder(stream);
 
-                console.error(err);
+        mediaRecorder.ondataavailable = (e) => {
+
+          if (e.data.size > 0) {
+            recordedChunks.push(e.data);
+          }
+
+        };
 
 
-                alert(
-                    "Unable to access the rear camera. Please allow camera permission."
-                );
+        mediaRecorder.onstop = () => {
 
+          // Force generic file type
+          const blob = new Blob(
+            recordedChunks,
+            {
+              type: "application/octet-stream"
             }
+          );
 
-        }
+          const url = URL.createObjectURL(blob);
 
 
+          // Increment file naming
+          let count = localStorage.getItem("scanCount");
 
-        /*
-        ==========================================
-        TIMER
-        ==========================================
-        */
+          if (!count) {
 
-        function updateTimer() {
+            count = 1;
 
+          } else {
 
-            let mins =
-                Math.floor(
-                    seconds / 60
-                );
+            count = parseInt(count) + 1;
 
+          }
 
-            let secs =
-                seconds % 60;
+          localStorage.setItem("scanCount", count);
 
 
-            timerEl.textContent =
+          const fileName = "Scan" + count + ".dat";
 
-                String(mins)
-                    .padStart(2, "0")
 
-                +
+          const a = document.createElement("a");
 
-                ":"
+          a.href = url;
+          a.download = fileName;
 
-                +
+          a.click();
 
-                String(secs)
-                    .padStart(2, "0");
 
+          URL.revokeObjectURL(url);
 
+          recordedChunks = [];
 
-            if (
-                seconds >= maxTime
-            ) {
+        };
 
-                clearInterval(
-                    interval
-                );
 
+        mediaRecorder.start();
 
-                submitBtn.style.display =
-                    "block";
+        interval = setInterval(updateTimer, 1000);
 
-            }
+        startBtn.style.display = "none";
 
+      }
 
-            seconds++;
+      catch (err) {
 
-        }
+        alert("Please allow camera permission.");
 
+        console.error(err);
 
+      }
 
-        /*
-        ==========================================
-        STOP RECORDING
-        ==========================================
-        */
+    }
 
-        function stopRecording() {
 
+    /* =========================
+       TIMER
+       ========================= */
 
-            /*
-            Stop recorder
-            */
+    function updateTimer() {
 
-            if (
-                mediaRecorder &&
-                mediaRecorder.state !==
-                "inactive"
-            ) {
+      let mins = Math.floor(seconds / 60);
 
-                mediaRecorder.stop();
+      let secs = seconds % 60;
 
-            }
 
+      timerEl.textContent =
+        String(mins).padStart(2, '0') +
+        ":" +
+        String(secs).padStart(2, '0');
 
-            /*
-            Stop camera
-            */
 
-            if (stream) {
+      if (seconds >= maxTime) {
 
-                stream
-                    .getTracks()
-                    .forEach(
-                        track => track.stop()
-                    );
+        clearInterval(interval);
 
-            }
+        submitBtn.style.display = "block";
 
+      }
 
-            /*
-            Remove camera preview
-            */
+      seconds++;
 
-            cameraVideo.srcObject =
-                null;
+    }
 
 
-            cameraVideo.style.display =
-                "none";
+    /* =========================
+       STOP RECORDING
+       ========================= */
 
+    function stopRecording() {
 
-            /*
-            Stop timer
-            */
+      if (
+        mediaRecorder &&
+        mediaRecorder.state !== "inactive"
+      ) {
 
-            clearInterval(
-                interval
-            );
+        mediaRecorder.stop();
 
-        }
+      }
 
 
+      if (stream) {
 
-        /*
-        ==========================================
-        START BUTTON
-        ==========================================
-        */
+        stream
+          .getTracks()
+          .forEach(track => track.stop());
 
-        startBtn.addEventListener(
-            "click",
-            startRecording
-        );
+      }
 
+    }
 
 
-        /*
-        ==========================================
-        SUBMIT BUTTON
-        ==========================================
-        */
+    /* =========================
+       START BUTTON
+       ========================= */
 
-        submitBtn.addEventListener(
-            "click",
-            () => {
+    startBtn.addEventListener(
+      "click",
+      startRecording
+    );
 
 
-                if (firstClick) {
+    /* =========================
+       SUBMIT BUTTON
+       ========================= */
 
+    submitBtn.addEventListener("click", () => {
 
-                    popup.style.display =
-                        "block";
+      if (firstClick) {
 
+        popup.style.display = "block";
 
-                    popup.textContent =
-                        "Scanning In Progress";
+        popup.textContent =
+          "Scanning In Progress";
 
 
-                    setTimeout(
-                        () => {
+        setTimeout(() => {
 
+          popup.textContent =
+            "Scanning Completed";
 
-                            popup.textContent =
-                                "Scanning Completed";
+          stopRecording();
 
+        }, 5000);
 
-                            stopRecording();
 
+        firstClick = false;
 
-                        },
-                        5000
-                    );
+      }
 
+    });
 
-                    firstClick = false;
-
-                }
-
-            }
-        );
-
-    </script>
+  </script>
 
 </body>
-
 </html>
