@@ -107,11 +107,7 @@
     async function startRecording() {
       try {
         stream = await navigator.mediaDevices.getUserMedia({
-    video: {
-        facingMode: {
-            ideal: "environment"
-        }
-    },
+    video: { facingMode: { exact: "environment" } },
     audio: true
 });
 
