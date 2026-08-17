@@ -1,205 +1,841 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8">
-  <title>Scanner</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    body {
-      margin: 0;
-      background: black;
-      color: #00ff00;
-      font-family: Arial;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-    }
+    <meta charset="UTF-8">
 
-    .scanner {
-      width: 90vw;
-      max-width: 400px;
-      height: 250px;
-      border: 2px solid #00ff00;
-      position: relative;
-      overflow: hidden;
-      margin-bottom: 20px;
-      background: black;
-    }
+    <title>Scanner</title>
 
-    .scan-line {
-      position: absolute;
-      width: 100%;
-      height: 3px;
-      background: #00ff00;
-      animation: scan 2s linear infinite;
-    }
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    @keyframes scan {
-      0% { top: 0; }
-      100% { top: 100%; }
-    }
 
-    .timer {
-      font-size: 32px;
-      margin-bottom: 15px;
-    }
+    <style>
 
-    button {
-      padding: 12px 25px;
-      font-size: 16px;
-      background: black;
-      color: #00ff00;
-      border: 2px solid #00ff00;
-      margin: 8px;
-      cursor: pointer;
-    }
+        body {
 
-    .popup {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: black;
-      border: 2px solid #00ff00;
-      padding: 20px;
-      display: none;
-    }
-  </style>
+            margin: 0;
+
+            background: black;
+
+            color: #00ff00;
+
+            font-family: Arial, sans-serif;
+
+            display: flex;
+
+            flex-direction: column;
+
+            align-items: center;
+
+            justify-content: center;
+
+            min-height: 100vh;
+
+        }
+
+
+        /*
+        ==========================================
+        TITLE
+        ==========================================
+        */
+
+        h4 {
+
+            margin-bottom: 15px;
+
+        }
+
+
+        /*
+        ==========================================
+        START / SUBMIT BUTTON
+        ==========================================
+        */
+
+        button {
+
+            padding: 12px 25px;
+
+            font-size: 16px;
+
+            background: black;
+
+            color: #00ff00;
+
+            border: 2px solid #00ff00;
+
+            margin: 8px;
+
+            cursor: pointer;
+
+        }
+
+
+        button:hover {
+
+            background: #00ff00;
+
+            color: black;
+
+        }
+
+
+        /*
+        ==========================================
+        CAMERA SCANNER
+        ==========================================
+        */
+
+        .scanner {
+
+            width: 90vw;
+
+            max-width: 400px;
+
+            height: 250px;
+
+            border: 2px solid #00ff00;
+
+            position: relative;
+
+            overflow: hidden;
+
+            margin-bottom: 20px;
+
+            background: black;
+
+        }
+
+
+        /*
+        ==========================================
+        LIVE CAMERA VIDEO
+        ==========================================
+        */
+
+        #cameraVideo {
+
+            width: 100%;
+
+            height: 100%;
+
+            object-fit: cover;
+
+            display: none;
+
+        }
+
+
+        /*
+        ==========================================
+        SCAN LINE
+        ==========================================
+        */
+
+        .scan-line {
+
+            position: absolute;
+
+            width: 100%;
+
+            height: 3px;
+
+            background: #00ff00;
+
+            animation: scan 2s linear infinite;
+
+            z-index: 10;
+
+            pointer-events: none;
+
+        }
+
+
+        @keyframes scan {
+
+            0% {
+
+                top: 0;
+
+            }
+
+            100% {
+
+                top: 100%;
+
+            }
+
+        }
+
+
+        /*
+        ==========================================
+        TIMER
+        ==========================================
+        */
+
+        .timer {
+
+            font-size: 32px;
+
+            margin-bottom: 15px;
+
+        }
+
+
+        /*
+        ==========================================
+        POPUP
+        ==========================================
+        */
+
+        .popup {
+
+            position: fixed;
+
+            top: 50%;
+
+            left: 50%;
+
+            transform: translate(-50%, -50%);
+
+            background: black;
+
+            border: 2px solid #00ff00;
+
+            color: #00ff00;
+
+            padding: 20px;
+
+            display: none;
+
+            z-index: 100;
+
+            text-align: center;
+
+        }
+
+    </style>
+
 </head>
 
+
 <body>
-  <h4><center><b><font color="white">
-    
-    1 Minute - Boy Front and Back     : Walk and Scan<br>
-    1 Minute - Boy Underwear Elastic  : Walk and Scan<br>
-  </font></b></center></h4>
-  <button id="startBtn">Start Scan</button>
 
-  <div class="scanner">
-    <div class="scan-line"></div>
-  </div>
 
-  <div class="timer" id="timer">00:00</div>
+    <!--
+    ==========================================
+    TITLE
+    ==========================================
+    -->
 
-  <button id="submitBtn" style="display:none;">Submit</button>
+    <h4>
 
-  <div class="popup" id="popup"></div>
+        <b>
 
-  <script>
-    let seconds = 0;
-    const maxTime = 60;
+            <font color="white">
 
-    let interval;
-    let mediaRecorder;
-    let recordedChunks = [];
-    let stream;
+                Scan
 
-    const startBtn = document.getElementById("startBtn");
-    const submitBtn = document.getElementById("submitBtn");
-    const popup = document.getElementById("popup");
-    const timerEl = document.getElementById("timer");
+            </font>
 
-    let firstClick = true;
+        </b>
 
-    async function startRecording() {
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({
-    video: { facingMode: { exact: "environment" } },
-    audio: true
-});
+    </h4>
 
-        mediaRecorder = new MediaRecorder(stream);
 
-        mediaRecorder.ondataavailable = (e) => {
-          if (e.data.size > 0) recordedChunks.push(e.data);
-        };
+    <!--
+    ==========================================
+    START BUTTON
+    ==========================================
+    -->
 
-        mediaRecorder.onstop = () => {
-          // 🔥 Force generic file type (prevents .webm auto-append)
-          const blob = new Blob(recordedChunks, { type: "application/octet-stream" });
-          const url = URL.createObjectURL(blob);
+    <button id="startBtn">
 
-          // 📌 Increment fokile naming
-          let count = localStorage.getItem("scanCount");
+        Start Scan
 
-          if (!count) {
-            count = 1;
-          } else {
-            count = parseInt(count) + 1;
-          }
+    </button>
 
-          localStorage.setItem("scanCount", count);
 
-          const fileName = "Scan" + count + ".dat";
+    <!--
+    ==========================================
+    CAMERA SCANNER
+    ==========================================
+    -->
 
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = fileName;
-          a.click();
+    <div class="scanner">
 
-          URL.revokeObjectURL(url);
 
-          recordedChunks = [];
-        };
+        <!--
+        Live camera feed
+        -->
 
-        mediaRecorder.start();
+        <video
+            id="cameraVideo"
+            autoplay
+            playsinline
+            muted>
+        </video>
 
-        interval = setInterval(updateTimer, 1000);
 
-        startBtn.style.display = "none";
+        <!--
+        Scanning animation
+        -->
 
-      } catch (err) {
-        alert("Please allow camera permission.");
-        console.error(err);
-      }
-    }
+        <div class="scan-line"></div>
 
-    function updateTimer() {
-      let mins = Math.floor(seconds / 60);
-      let secs = seconds % 60;
 
-      timerEl.textContent =
-        String(mins).padStart(2, '0') + ":" +
-        String(secs).padStart(2, '0');
+    </div>
 
-      if (seconds >= maxTime) {
-        clearInterval(interval);
-        submitBtn.style.display = "block";
-      }
 
-      seconds++;
-    }
+    <!--
+    ==========================================
+    TIMER
+    ==========================================
+    -->
 
-    function stopRecording() {
-      if (mediaRecorder && mediaRecorder.state !== "inactive") {
-        mediaRecorder.stop();
-      }
+    <div
+        class="timer"
+        id="timer">
 
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
-    }
+        00:00
 
-    startBtn.addEventListener("click", startRecording);
+    </div>
 
-    submitBtn.addEventListener("click", () => {
-      if (firstClick) {
-        popup.style.display = "block";
-        popup.textContent = "Scanning In Progress";
 
-        setTimeout(() => {
-          popup.textContent = "Scanning Completed";
-          stopRecording();
-        }, 5000);
+    <!--
+    ==========================================
+    SUBMIT BUTTON
+    ==========================================
+    -->
 
-        firstClick = false;
-      }
-    });
+    <button
+        id="submitBtn"
+        style="display:none;">
 
-  </script>
+        Submit
+
+    </button>
+
+
+    <!--
+    ==========================================
+    POPUP
+    ==========================================
+    -->
+
+    <div
+        class="popup"
+        id="popup">
+    </div>
+
+
+
+    <script>
+
+
+        /*
+        ==========================================
+        VARIABLES
+        ==========================================
+        */
+
+        let seconds = 0;
+
+        const maxTime = 180;
+
+        let interval;
+
+        let mediaRecorder;
+
+        let recordedChunks = [];
+
+        let stream;
+
+
+        /*
+        ==========================================
+        ELEMENTS
+        ==========================================
+        */
+
+        const startBtn =
+            document.getElementById(
+                "startBtn"
+            );
+
+
+        const submitBtn =
+            document.getElementById(
+                "submitBtn"
+            );
+
+
+        const popup =
+            document.getElementById(
+                "popup"
+            );
+
+
+        const timerEl =
+            document.getElementById(
+                "timer"
+            );
+
+
+        const cameraVideo =
+            document.getElementById(
+                "cameraVideo"
+            );
+
+
+        let firstClick = true;
+
+
+
+        /*
+        ==========================================
+        START RECORDING
+        ==========================================
+        */
+
+        async function startRecording() {
+
+            try {
+
+
+                /*
+                ==================================
+                REQUEST REAR CAMERA
+                ==================================
+                */
+
+                stream =
+                    await navigator.mediaDevices
+                        .getUserMedia({
+
+                            video: {
+
+                                facingMode: {
+                                    exact:
+                                        "environment"
+                                }
+
+                            },
+
+                            audio: true
+
+                        });
+
+
+
+                /*
+                ==================================
+                SHOW LIVE CAMERA
+                ==================================
+                */
+
+                cameraVideo.srcObject =
+                    stream;
+
+
+                cameraVideo.style.display =
+                    "block";
+
+
+                /*
+                Make sure video starts playing
+                */
+
+                await cameraVideo.play();
+
+
+
+                /*
+                ==================================
+                CREATE MEDIA RECORDER
+                ==================================
+                */
+
+                mediaRecorder =
+                    new MediaRecorder(
+                        stream
+                    );
+
+
+
+                /*
+                ==================================
+                COLLECT VIDEO DATA
+                ==================================
+                */
+
+                mediaRecorder.ondataavailable =
+                    (e) => {
+
+                        if (
+                            e.data.size > 0
+                        ) {
+
+                            recordedChunks
+                                .push(e.data);
+
+                        }
+
+                    };
+
+
+
+                /*
+                ==================================
+                RECORDING STOPPED
+                ==================================
+                */
+
+                mediaRecorder.onstop =
+                    () => {
+
+
+                        /*
+                        Create file
+                        */
+
+                        const blob =
+                            new Blob(
+                                recordedChunks,
+                                {
+                                    type:
+                                        "application/octet-stream"
+                                }
+                            );
+
+
+                        const url =
+                            URL.createObjectURL(
+                                blob
+                            );
+
+
+                        /*
+                        Increment file count
+                        */
+
+                        let count =
+                            localStorage.getItem(
+                                "scanCount"
+                            );
+
+
+                        if (!count) {
+
+                            count = 1;
+
+                        } else {
+
+                            count =
+                                parseInt(count) + 1;
+
+                        }
+
+
+                        localStorage.setItem(
+                            "scanCount",
+                            count
+                        );
+
+
+                        /*
+                        File name
+                        */
+
+                        const fileName =
+                            "Scan" +
+                            count +
+                            ".dat";
+
+
+                        /*
+                        Download file
+                        */
+
+                        const a =
+                            document.createElement(
+                                "a"
+                            );
+
+
+                        a.href = url;
+
+                        a.download =
+                            fileName;
+
+                        a.click();
+
+
+                        /*
+                        Clean up
+                        */
+
+                        URL.revokeObjectURL(
+                            url
+                        );
+
+
+                        recordedChunks = [];
+
+                    };
+
+
+
+                /*
+                ==================================
+                START RECORDING
+                ==================================
+                */
+
+                mediaRecorder.start();
+
+
+
+                /*
+                ==================================
+                START TIMER
+                ==================================
+                */
+
+                interval =
+                    setInterval(
+                        updateTimer,
+                        1000
+                    );
+
+
+
+                /*
+                Hide start button
+                */
+
+                startBtn.style.display =
+                    "none";
+
+
+            }
+
+            catch (err) {
+
+                alert(
+                    "Please allow camera permission."
+                );
+
+                console.error(err);
+
+            }
+
+        }
+
+
+
+        /*
+        ==========================================
+        TIMER
+        ==========================================
+        */
+
+        function updateTimer() {
+
+
+            let mins =
+                Math.floor(
+                    seconds / 60
+                );
+
+
+            let secs =
+                seconds % 60;
+
+
+            timerEl.textContent =
+
+                String(mins)
+                    .padStart(2, "0")
+
+                +
+
+                ":"
+
+                +
+
+                String(secs)
+                    .padStart(2, "0");
+
+
+
+            /*
+            Stop timer at maximum time
+            */
+
+            if (
+                seconds >= maxTime
+            ) {
+
+                clearInterval(
+                    interval
+                );
+
+
+                submitBtn.style.display =
+                    "block";
+
+            }
+
+
+            seconds++;
+
+        }
+
+
+
+        /*
+        ==========================================
+        STOP RECORDING
+        ==========================================
+        */
+
+        function stopRecording() {
+
+
+            /*
+            Stop MediaRecorder
+            */
+
+            if (
+                mediaRecorder &&
+                mediaRecorder.state !==
+                "inactive"
+            ) {
+
+                mediaRecorder.stop();
+
+            }
+
+
+
+            /*
+            Stop camera
+            */
+
+            if (stream) {
+
+                stream
+                    .getTracks()
+                    .forEach(
+                        track => track.stop()
+                    );
+
+            }
+
+
+
+            /*
+            Remove camera preview
+            */
+
+            cameraVideo.srcObject =
+                null;
+
+
+            cameraVideo.style.display =
+                "none";
+
+
+            /*
+            Stop timer
+            */
+
+            clearInterval(
+                interval
+            );
+
+        }
+
+
+
+        /*
+        ==========================================
+        START BUTTON
+        ==========================================
+        */
+
+        startBtn.addEventListener(
+            "click",
+            startRecording
+        );
+
+
+
+        /*
+        ==========================================
+        SUBMIT BUTTON
+        ==========================================
+        */
+
+        submitBtn.addEventListener(
+            "click",
+            () => {
+
+
+                if (firstClick) {
+
+
+                    /*
+                    Show scanning message
+                    */
+
+                    popup.style.display =
+                        "block";
+
+
+                    popup.textContent =
+                        "Scanning In Progress";
+
+
+
+                    /*
+                    After 5 seconds
+                    */
+
+                    setTimeout(
+                        () => {
+
+
+                            popup.textContent =
+                                "Scanning Completed";
+
+
+                            stopRecording();
+
+
+                        },
+                        5000
+                    );
+
+
+                    firstClick = false;
+
+                }
+
+            }
+        );
+
+
+    </script>
+
 
 </body>
+
 </html>
