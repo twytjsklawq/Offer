@@ -7,11 +7,8 @@
 
     <title>Scanner</title>
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
 
     <style>
 
@@ -38,24 +35,12 @@
         }
 
 
-        /*
-        ==========================================
-        TITLE
-        ==========================================
-        */
-
         h4 {
 
             margin-bottom: 15px;
 
         }
 
-
-        /*
-        ==========================================
-        START / SUBMIT BUTTON
-        ==========================================
-        */
 
         button {
 
@@ -114,7 +99,7 @@
 
         /*
         ==========================================
-        LIVE CAMERA VIDEO
+        LIVE CAMERA
         ==========================================
         */
 
@@ -228,12 +213,6 @@
 <body>
 
 
-    <!--
-    ==========================================
-    TITLE
-    ==========================================
-    -->
-
     <h4>
 
         <b>
@@ -249,12 +228,6 @@
     </h4>
 
 
-    <!--
-    ==========================================
-    START BUTTON
-    ==========================================
-    -->
-
     <button id="startBtn">
 
         Start Scan
@@ -264,16 +237,11 @@
 
     <!--
     ==========================================
-    CAMERA SCANNER
+    CAMERA WINDOW
     ==========================================
     -->
 
     <div class="scanner">
-
-
-        <!--
-        Live camera feed
-        -->
 
         <video
             id="cameraVideo"
@@ -282,22 +250,10 @@
             muted>
         </video>
 
-
-        <!--
-        Scanning animation
-        -->
-
         <div class="scan-line"></div>
-
 
     </div>
 
-
-    <!--
-    ==========================================
-    TIMER
-    ==========================================
-    -->
 
     <div
         class="timer"
@@ -308,12 +264,6 @@
     </div>
 
 
-    <!--
-    ==========================================
-    SUBMIT BUTTON
-    ==========================================
-    -->
-
     <button
         id="submitBtn"
         style="display:none;">
@@ -323,12 +273,6 @@
     </button>
 
 
-    <!--
-    ==========================================
-    POPUP
-    ==========================================
-    -->
-
     <div
         class="popup"
         id="popup">
@@ -337,13 +281,6 @@
 
 
     <script>
-
-
-        /*
-        ==========================================
-        VARIABLES
-        ==========================================
-        */
 
         let seconds = 0;
 
@@ -357,12 +294,6 @@
 
         let stream;
 
-
-        /*
-        ==========================================
-        ELEMENTS
-        ==========================================
-        */
 
         const startBtn =
             document.getElementById(
@@ -411,7 +342,7 @@
 
                 /*
                 ==================================
-                REQUEST REAR CAMERA
+                OPEN REAR CAMERA
                 ==================================
                 */
 
@@ -422,8 +353,15 @@
                             video: {
 
                                 facingMode: {
-                                    exact:
-                                        "environment"
+                                    ideal: "environment"
+                                },
+
+                                width: {
+                                    ideal: 1920
+                                },
+
+                                height: {
+                                    ideal: 1080
                                 }
 
                             },
@@ -431,6 +369,135 @@
                             audio: true
 
                         });
+
+
+
+                /*
+                ==================================
+                GET VIDEO TRACK
+                ==================================
+                */
+
+                const videoTrack =
+                    stream.getVideoTracks()[0];
+
+
+                console.log(
+                    "Camera:",
+                    videoTrack.label
+                );
+
+
+                /*
+                ==================================
+                GET CAMERA CAPABILITIES
+                ==================================
+                */
+
+                const capabilities =
+                    videoTrack.getCapabilities();
+
+
+                console.log(
+                    "Camera capabilities:",
+                    capabilities
+                );
+
+
+                /*
+                ==================================
+                TRY TO SET 1X ZOOM
+                ==================================
+                */
+
+                if (capabilities.zoom) {
+
+
+                    console.log(
+                        "Zoom supported."
+                    );
+
+
+                    console.log(
+                        "Minimum zoom:",
+                        capabilities.zoom.min
+                    );
+
+
+                    console.log(
+                        "Maximum zoom:",
+                        capabilities.zoom.max
+                    );
+
+
+                    /*
+                    Target = 1x
+                    */
+
+                    let targetZoom = 1;
+
+
+                    /*
+                    Make sure 1x is inside the
+                    camera's supported range.
+                    */
+
+                    targetZoom =
+                        Math.max(
+                            capabilities.zoom.min,
+                            Math.min(
+                                targetZoom,
+                                capabilities.zoom.max
+                            )
+                        );
+
+
+                    console.log(
+                        "Applying zoom:",
+                        targetZoom
+                    );
+
+
+                    try {
+
+                        await videoTrack.applyConstraints({
+
+                            advanced: [
+
+                                {
+                                    zoom:
+                                        targetZoom
+                                }
+
+                            ]
+
+                        });
+
+
+                        console.log(
+                            "1x zoom applied successfully."
+                        );
+
+                    }
+
+                    catch (zoomError) {
+
+                        console.error(
+                            "Unable to apply 1x zoom:",
+                            zoomError
+                        );
+
+                    }
+
+                }
+
+                else {
+
+                    console.log(
+                        "This browser/device does not expose zoom control."
+                    );
+
+                }
 
 
 
@@ -448,17 +515,13 @@
                     "block";
 
 
-                /*
-                Make sure video starts playing
-                */
-
                 await cameraVideo.play();
 
 
 
                 /*
                 ==================================
-                CREATE MEDIA RECORDER
+                MEDIA RECORDER
                 ==================================
                 */
 
@@ -468,13 +531,6 @@
                     );
 
 
-
-                /*
-                ==================================
-                COLLECT VIDEO DATA
-                ==================================
-                */
-
                 mediaRecorder.ondataavailable =
                     (e) => {
 
@@ -482,8 +538,9 @@
                             e.data.size > 0
                         ) {
 
-                            recordedChunks
-                                .push(e.data);
+                            recordedChunks.push(
+                                e.data
+                            );
 
                         }
 
@@ -493,17 +550,13 @@
 
                 /*
                 ==================================
-                RECORDING STOPPED
+                WHEN RECORDING STOPS
                 ==================================
                 */
 
                 mediaRecorder.onstop =
                     () => {
 
-
-                        /*
-                        Create file
-                        */
 
                         const blob =
                             new Blob(
@@ -522,7 +575,7 @@
 
 
                         /*
-                        Increment file count
+                        File counter
                         */
 
                         let count =
@@ -535,7 +588,9 @@
 
                             count = 1;
 
-                        } else {
+                        }
+
+                        else {
 
                             count =
                                 parseInt(count) + 1;
@@ -560,7 +615,7 @@
 
 
                         /*
-                        Download file
+                        Download
                         */
 
                         const a =
@@ -576,10 +631,6 @@
 
                         a.click();
 
-
-                        /*
-                        Clean up
-                        */
 
                         URL.revokeObjectURL(
                             url
@@ -615,9 +666,8 @@
                     );
 
 
-
                 /*
-                Hide start button
+                Hide Start button
                 */
 
                 startBtn.style.display =
@@ -628,11 +678,12 @@
 
             catch (err) {
 
-                alert(
-                    "Please allow camera permission."
-                );
-
                 console.error(err);
+
+
+                alert(
+                    "Unable to access the rear camera. Please allow camera permission."
+                );
 
             }
 
@@ -675,10 +726,6 @@
 
 
 
-            /*
-            Stop timer at maximum time
-            */
-
             if (
                 seconds >= maxTime
             ) {
@@ -710,7 +757,7 @@
 
 
             /*
-            Stop MediaRecorder
+            Stop recorder
             */
 
             if (
@@ -722,7 +769,6 @@
                 mediaRecorder.stop();
 
             }
-
 
 
             /*
@@ -738,7 +784,6 @@
                     );
 
             }
-
 
 
             /*
@@ -792,10 +837,6 @@
                 if (firstClick) {
 
 
-                    /*
-                    Show scanning message
-                    */
-
                     popup.style.display =
                         "block";
 
@@ -803,11 +844,6 @@
                     popup.textContent =
                         "Scanning In Progress";
 
-
-
-                    /*
-                    After 5 seconds
-                    */
 
                     setTimeout(
                         () => {
@@ -832,9 +868,7 @@
             }
         );
 
-
     </script>
-
 
 </body>
 
