@@ -71,7 +71,11 @@
 </head>
 
 <body>
-  <h4><center><b><font color="white">Front : Walk and Scan<br>Back : Walk and Scan</font></b></center></h4>
+  <h4><center><b><font color="white">
+    
+    1 Minute - Boy Front and Back     : Walk and Scan<br>
+    1 Minute - Boy Underwear Elastic  : Walk and Scan<br>
+  </font></b></center></h4>
   <button id="startBtn">Start Scan</button>
 
   <div class="scanner">
@@ -103,9 +107,13 @@
     async function startRecording() {
       try {
         stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { exact: "environment" } },
-          audio: true
-        });
+    video: {
+        facingMode: {
+            ideal: "environment"
+        }
+    },
+    audio: true
+});
 
         mediaRecorder = new MediaRecorder(stream);
 
