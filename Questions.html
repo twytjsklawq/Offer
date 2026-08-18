@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Questionnaire</title>
+
+  <style>
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 30px 15px;
+      background: #87ceeb;
+      font-family: Arial, sans-serif;
+      color: #222;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 800px;
+      margin: auto;
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    h1 {
+      text-align: center;
+      margin-top: 0;
+      margin-bottom: 30px;
+    }
+
+    .question {
+      margin-bottom: 25px;
+      padding: 20px;
+      border: 2px solid #ddd;
+      border-radius: 10px;
+      background: #fafafa;
+      transition: 0.3s;
+    }
+
+    .question h3 {
+      margin-top: 0;
+      margin-bottom: 15px;
+    }
+
+    .question.wrong {
+      border-color: red;
+      background: #fff0f0;
+    }
+
+    .question.correct {
+      border-color: #22a447;
+      background: #f0fff4;
+    }
+
+    .choices {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .choice {
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 7px;
+      background: white;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .choice:hover {
+      background: #f0f0f0;
+    }
+
+    .choice input {
+      margin-right: 10px;
+      cursor: pointer;
+    }
+
+    .choice.locked {
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+
+    .submit-container {
+      text-align: center;
+      margin-top: 30px;
+    }
+
+    #submitBtn {
+      padding: 14px 40px;
+      font-size: 17px;
+      border: none;
+      border-radius: 8px;
+      background: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+
+    #submitBtn:hover {
+      background: #0056b3;
+    }
+
+    #submitBtn:disabled {
+      background: #999;
+      cursor: not-allowed;
+    }
+
+    .attempt-info {
+      text-align: center;
+      margin-top: 15px;
+      font-size: 15px;
+      color: #555;
+    }
+
+
+    /* =========================
+       POPUP
+       ========================= */
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+
+    .popup {
+      width: 100%;
+      max-width: 400px;
+      background: white;
+      border-radius: 15px;
+      padding: 35px 25px;
+      text-align: center;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .popup-icon {
+      font-size: 50px;
+      margin-bottom: 15px;
+    }
+
+    .popup-message {
+      font-size: 20px;
+      font-weight: bold;
+      line-height: 1.5;
+    }
+
+    .popup button {
+      margin-top: 25px;
+      padding: 10px 30px;
+      border: none;
+      border-radius: 7px;
+      background: #007bff;
+      color: white;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    .checking {
+      color: #007bff;
+    }
+
+    .success {
+      color: #159447;
+    }
+
+    .error {
+      color: #d00000;
+    }
+
+
+    /* =========================
+       MOBILE
+       ========================= */
+
+    @media (max-width: 600px) {
+
+      body {
+        padding: 15px 10px;
+      }
+
+      .container {
+        padding: 20px 15px;
+      }
+
+      .question {
+        padding: 15px;
+      }
+
+      .question h3 {
+        font-size: 17px;
+      }
+
+      #submitBtn {
+        width: 100%;
+      }
+
+    }
+
+  </style>
+</head>
+
+
+<body>
+
+  <div class="container">
+
+    <h1>ಪ್ರಶ್ನೆಗಳು - ಕೇವಲ 3 ಅವಕಾಶಗಳು </h1>
+
+    <div id="questionsContainer"></div>
+
+    <div class="submit-container">
+
+      <button id="submitBtn">
+        Submit
+      </button>
+
+      <div class="attempt-info">
+        Attempts remaining:
+        <span id="attemptsRemaining">3</span>
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================
+       POPUP
+       ========================= -->
+
+  <div class="overlay" id="overlay">
+
+    <div class="popup">
+
+      <div
+        class="popup-icon"
+        id="popupIcon">
+      </div>
+
+      <div
+        class="popup-message"
+        id="popupMessage">
+      </div>
+
+      <button
+        id="popupButton"
+        onclick="closePopup()">
+        OK
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <script>
+
+    /* =====================================================
+       EDIT YOUR QUESTIONS HERE
+       =====================================================
+
+       For every question provide:
+
+       question:
+       The question text
+
+       choices:
+       Exactly 4 choices
+
+       answer:
+       The correct choice
+
+       You can change all 20 questions below.
+    ===================================================== */
+
+    const questions = [
+
+      {
+        question: "ಹುಡುಗ ಯಾವ ಬಟ್ಟೆಯನ್ನು ಧರಿಸಿದ್ದಾನೆ?",
+        choices: [
+          "White Shirt, Black Pant",
+          "Black Shirt, Brown Pant",
+          "No Cloths",
+          "Yellow Shirt, White Pant"
+        ],
+        answer: "Black Shirt, Brown Pant"
+      },
+
+      {
+        question: "ಹುಡುಗಿ ಯಾವ ಬಟ್ಟೆಯನ್ನು ಧರಿಸಿದ್ದಾನೆ?",
+        choices: [
+          "White Shirt, Black Pant",
+          "Black & White Shirt, Jeans Short",
+          "No Cloths",
+          "Yellow Shirt, White Pant"
+        ],
+        answer: "Black & White Shirt, Jeans Short"
+      },
+
+      {
+        question: "ಹುಡುಗಿಯ ಮೊಲೆಯ ಗಾತ್ರ?",
+        choices: [
+          "Small Size",
+          "Big Size",
+          "Normal Size"
+        ],
+        answer: "Small Size"
+      },
+
+      {
+        question: "ಹುಡುಗಿಯ ಮೊಲೆಯ ಚೊಟ್ಟಿನ ಬಣ್ಣ?",
+        choices: [
+          "Brown",
+          "White",
+          "Red",
+        ],
+        answer: "Brown"
+      },
+
+      {
+        question: "ಹುಡುಗನ ತುಣ್ನಿಯ ಗಾತ್ರ?",
+        choices: [
+          "Small Size",
+          "Big Size",
+          "Normal Size"
+        ],
+        answer: "Big Size"
+      },
+
+      {
+        question: "ಹುಡುಗಿಯ ನಿಕ್ಕರ್/ಒಳಉಡುಪನ್ನು ಹುಡುಗ ಕಳಚಿದ್ದಾನೆ?",
+        choices: [
+          "Yes",
+          "No",
+        ],
+        answer: "No"
+      },
+
+      {
+        question: "ಹುಡುಗನ ನಿಕ್ಕರ್/ಒಳಉಡುಪನ್ನು ಹುಡುಗಿ ಕಳಚಿದ್ದಾಳೆ?",
+        choices: [
+            "Yes",
+          "No",
+        ],
+        answer: "No"
+      },
+
+      {
+        question: "ಹುಡುಗಿ ಹುಡುಗನ ತುಣ್ಣಿಯನ್ನು ಎಳೆಯುತ್ತಿದಾಳೆ?",
+        choices: [
+            "Yes",
+          "No",
+        ],
+        answer: "Yes"
+      },
+
+      {
+        question: "ಹುಡುಗ ಹುಡುಗಿಯ ತುಲ್ಲನ್ನು ತನ್ನ ಕೈ ಇಂದ ತಿಕ್ಕುತ್ತಿದ್ದಾನೆ ?",
+        choices: [
+            "Yes",
+          "No",
+        ],
+        answer: "Yes"
+      },
+
+      {
+        question: "ಹುಡುಗಿಯ ತುಲ್ಲಿನ ಮೇಲಿನ ಕೂದಲು?",
+        choices: [
+          "Small Hair",
+          "Big Hair",
+          "No Hair"
+        ],
+        answer: "No Hair"
+      },
+
+      {
+        question: "ಹುಡುಗನ ತುಣ್ಣಿಯ ಮೇಲಿನ ಕೂದಲು?",
+        choices: [
+          "Small Hair",
+          "Big Hair",
+          "No Hair"
+        ],
+        answer: "No Hair"
+      },
+
+      {
+        question: "ಹುಡುಗ ತನ್ನ ತುಣ್ನಿಯನ್ನು ಹುಡುಗಿಗೆ ಎಲ್ಲಿ ಹಾಕುತ್ತಿದ್ದಾನೆ?",
+        choices: [
+          "ತುಲ್ಲಿನ ಒಳಗೆ ",
+          "ಮುಕಳಿಯ ಒಳಗೆ "
+        ],
+        answer: "ತುಲ್ಲಿನ ಒಳಗೆ "
+      },
+
+      {
+        question: "ಹುಡುಗ ಹುಡುಗಿಯ ಮೊಲೆಯನ್ನು ಒತ್ತುತಿದ್ದಾನೆ?",
+        choices: [
+          "Yes",
+          "No"
+        ],
+        answer: "Yes"
+      },
+
+      {
+        question: "ಹುಡುಗಿ ಹುಡುಗನ ತುಣ್ಣಿಯನ್ನು ಬಾಯಿಂದ ಸಿಬುತ್ತಿದ್ದಾಳೆ?",
+        choices: [
+          "Yes",
+          "No"
+        ],
+        answer: "Yes"
+      },
+
+      {
+        question: "ಹುಡುಗಿ ತುಲ್ಲಿಗೆ ತನ್ನ ಎಂಜಲನ್ನು ಹಾಕುತ್ತಿದ್ದಾಳೆ?",
+        choices: [
+          "Yes",
+          "No"
+        ],
+        answer: "Yes"
+      },
+
+      {
+        question: "ಹುಡುಗ ಹುಡುಗಿಯ ತುಲ್ಲಿಗೆ ತನ್ನ ಎಂಜಲನ್ನು ಹಾಕುತ್ತಿದಾನೆ?",
+        choices: [
+          "Yes",
+          "No"
+        ],
+        answer: "Yes"
+      },
+
+      {
+        question: "ಹುಡುಗ ತುಣ್ಣಿಯನ್ನು ಹುಡುಗಿಯ ತುಲ್ಲಿನ ಒಳಗೆ ಹಾಕುವಾಗ ಹುಡುಗಿಯ ತುಲ್ಲಿನ ಚರ್ಮ ತೆರೆದಿದೆ.?",
+        choices: [
+           "Yes",
+          "No"
+        ],
+        answer: "Yes"
+      },
+
+      {
+        question: "ಹುಡುಗಿ ಹುಡುಗನ ತುಣ್ನಿಯ ಬಿಳಿಯ ರಸವನ್ನು ಸಿಬುತ್ತಿದ್ದಾಳೆ?",
+        choices: [
+          "Yes",
+          "No"
+        ],
+        answer: "Yes"
+      },
+
+      {
+        question: "ಹುಡುಗ ತುಣ್ಣಿಯನ್ನು ತುಲ್ಲಿಗೆ ಹಾಕುವಾಗ ಹುಡುಗಿ ಮೂತ್ರ ಮಾಡಿಕೊಂಡಿದ್ದಾಳೆ.?",
+        choices: [
+          "Yes",
+          "No"
+        ],
+        answer: "No"
+      },
+
+      {
+        question: "ಹುಡುಗ ತುಣ್ಣಿಯನ್ನು ತುಲ್ಲಿಗೆ ಹಾಕುವಾಗ ಹುಡುಗಿಯ ತುಲ್ಲಿನಿಂದ ಹುಡುಗನ ತುಣ್ನಿಯ ಬಿಳಿಯ ರಸ ಹೊರಬರುತ್ತಿದೆ.?",
+        choices: [
+          "Yes",
+          "No"
+        ],
+        answer: "No"
+      }
+
+    ];
+
+
+    /* =====================================================
+       VARIABLES
+    ===================================================== */
+
+    let attemptsLeft = 3;
+
+    let submitted = false;
+
+    const questionsContainer =
+      document.getElementById("questionsContainer");
+
+    const submitBtn =
+      document.getElementById("submitBtn");
+
+    const attemptsRemaining =
+      document.getElementById("attemptsRemaining");
+
+    const overlay =
+      document.getElementById("overlay");
+
+    const popupMessage =
+      document.getElementById("popupMessage");
+
+    const popupIcon =
+      document.getElementById("popupIcon");
+
+    const popupButton =
+      document.getElementById("popupButton");
+
+
+    /* =====================================================
+       CREATE QUESTIONS
+    ===================================================== */
+
+    function loadQuestions() {
+
+      questionsContainer.innerHTML = "";
+
+      questions.forEach((q, index) => {
+
+        const questionDiv =
+          document.createElement("div");
+
+        questionDiv.className = "question";
+
+        questionDiv.id =
+          "question-" + index;
+
+
+        const title =
+          document.createElement("h3");
+
+        title.textContent =
+          (index + 1) + ". " + q.question;
+
+
+        const choicesDiv =
+          document.createElement("div");
+
+        choicesDiv.className = "choices";
+
+
+        q.choices.forEach((choice, choiceIndex) => {
+
+          const label =
+            document.createElement("label");
+
+          label.className = "choice";
+
+
+          const radio =
+            document.createElement("input");
+
+          radio.type = "radio";
+
+          radio.name = "question-" + index;
+
+          radio.value = choice;
+
+
+          label.appendChild(radio);
+
+          label.appendChild(
+            document.createTextNode(choice)
+          );
+
+
+          choicesDiv.appendChild(label);
+
+        });
+
+
+        questionDiv.appendChild(title);
+
+        questionDiv.appendChild(choicesDiv);
+
+        questionsContainer.appendChild(questionDiv);
+
+      });
+
+    }
+
+
+    loadQuestions();
+
+
+    /* =====================================================
+       CHECK WHETHER ALL QUESTIONS ARE ANSWERED
+    ===================================================== */
+
+    function allQuestionsAnswered() {
+
+      for (let i = 0; i < questions.length; i++) {
+
+        const selected =
+          document.querySelector(
+            `input[name="question-${i}"]:checked`
+          );
+
+        if (!selected) {
+
+          return false;
+
+        }
+
+      }
+
+      return true;
+
+    }
+
+
+    /* =====================================================
+       SUBMIT
+    ===================================================== */
+
+    submitBtn.addEventListener("click", () => {
+
+      if (attemptsLeft <= 0) {
+
+        return;
+
+      }
+
+
+      /* Check if every question is answered */
+
+      if (!allQuestionsAnswered()) {
+
+        showPopup(
+          "⚠️",
+          "Please answer all 20 questions before submitting.",
+          "error"
+        );
+
+        return;
+
+      }
+
+
+      /* Disable submit while checking */
+
+      submitBtn.disabled = true;
+
+
+      /* Show checking popup */
+
+      showPopup(
+        "⏳",
+        "Checking your answers",
+        "checking",
+        false
+      );
+
+
+      /* Wait 5 seconds */
+
+      setTimeout(() => {
+
+        checkAnswers();
+
+      }, 5000);
+
+    });
+
+
+    /* =====================================================
+       CHECK ANSWERS
+    ===================================================== */
+
+    function checkAnswers() {
+
+      let incorrectCount = 0;
+
+      const incorrectQuestions = [];
+
+
+      questions.forEach((q, index) => {
+
+        const selected =
+          document.querySelector(
+            `input[name="question-${index}"]:checked`
+          );
+
+
+        const questionDiv =
+          document.getElementById(
+            "question-" + index
+          );
+
+
+        /* Remove previous status */
+
+        questionDiv.classList.remove("wrong");
+        questionDiv.classList.remove("correct");
+
+
+        if (selected.value === q.answer) {
+
+          questionDiv.classList.add("correct");
+
+        } else {
+
+          incorrectCount++;
+
+          incorrectQuestions.push(index);
+
+          questionDiv.classList.add("wrong");
+
+        }
+
+      });
+
+
+      /* =================================================
+         ALL CORRECT
+      ================================================= */
+
+      if (incorrectCount === 0) {
+
+        submitted = true;
+
+        submitBtn.disabled = true;
+
+        showPopup(
+          "✓",
+          "All the answers are correct",
+          "success"
+        );
+
+
+        /* Lock all answers */
+
+        lockAllQuestions();
+
+        return;
+
+      }
+
+
+      /* =================================================
+         INCORRECT ANSWERS
+      ================================================= */
+
+      attemptsLeft--;
+
+      attemptsRemaining.textContent =
+        attemptsLeft;
+
+
+      if (attemptsLeft > 0) {
+
+        showPopup(
+          "✕",
+          "Some answers are incorrect.<br><br>" +
+          "You have only " +
+          attemptsLeft +
+          " attempts left",
+          "error"
+        );
+
+
+        /*
+          Automatically scroll to the first
+          incorrect question after closing popup.
+        */
+
+        popupButton.onclick = () => {
+
+          closePopup();
+
+          scrollToIncorrectQuestion(
+            incorrectQuestions[0]
+          );
+
+        };
+
+
+        /*
+          Allow the user to submit again.
+        */
+
+        submitBtn.disabled = false;
+
+
+        /*
+          Lock correctly answered questions.
+          Incorrect ones remain editable.
+        */
+
+        lockCorrectQuestions();
+
+      }
+
+      else {
+
+        /*
+          No attempts left
+        */
+
+        showPopup(
+          "✕",
+          "Some answers are incorrect.<br><br>" +
+          "You have used all your attempts.",
+          "error"
+        );
+
+
+        submitBtn.disabled = true;
+
+        submitted = true;
+
+
+        /*
+          Lock everything.
+        */
+
+        lockAllQuestions();
+
+      }
+
+    }
+
+
+    /* =====================================================
+       LOCK CORRECT QUESTIONS
+    ===================================================== */
+
+    function lockCorrectQuestions() {
+
+      questions.forEach((q, index) => {
+
+        const questionDiv =
+          document.getElementById(
+            "question-" + index
+          );
+
+
+        if (questionDiv.classList.contains("correct")) {
+
+          const radios =
+            questionDiv.querySelectorAll(
+              "input[type='radio']"
+            );
+
+
+          radios.forEach(radio => {
+
+            radio.disabled = true;
+
+          });
+
+
+          questionDiv.classList.add("locked");
+
+        }
+
+      });
+
+    }
+
+
+    /* =====================================================
+       LOCK EVERYTHING
+    ===================================================== */
+
+    function lockAllQuestions() {
+
+      const radios =
+        document.querySelectorAll(
+          "input[type='radio']"
+        );
+
+
+      radios.forEach(radio => {
+
+        radio.disabled = true;
+
+      });
+
+    }
+
+
+    /* =====================================================
+       SCROLL TO INCORRECT QUESTION
+    ===================================================== */
+
+    function scrollToIncorrectQuestion(index) {
+
+      const question =
+        document.getElementById(
+          "question-" + index
+        );
+
+
+      if (question) {
+
+        question.scrollIntoView({
+          behavior: "smooth",
+          block: "center"
+        });
+
+      }
+
+    }
+
+
+    /* =====================================================
+       POPUP
+    ===================================================== */
+
+    function showPopup(
+      icon,
+      message,
+      type,
+      showButton = true
+    ) {
+
+      popupIcon.textContent = icon;
+
+      popupMessage.innerHTML = message;
+
+      popupMessage.className =
+        "popup-message " + type;
+
+
+      popupButton.style.display =
+        showButton ? "inline-block" : "none";
+
+
+      overlay.style.display = "flex";
+
+    }
+
+
+    /* =====================================================
+       CLOSE POPUP
+    ===================================================== */
+
+    function closePopup() {
+
+      overlay.style.display = "none";
+
+    }
+
+  </script>
+
+</body>
+</html>
